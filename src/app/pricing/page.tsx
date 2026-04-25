@@ -36,6 +36,7 @@ export default function PricingPage() {
         </p>
       </section>
 
+      <DemoNotice />
       <Tiers />
       <Calculator />
       <Comparison />
@@ -73,6 +74,30 @@ function Header() {
   );
 }
 
+function DemoNotice() {
+  return (
+    <section className="mx-auto max-w-5xl px-6">
+      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-sm text-amber-100">
+        <p className="flex items-start gap-3">
+          <span className="mt-1 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />
+          <span>
+            <strong className="font-semibold text-amber-200">Demo deployment.</strong>{" "}
+            BOLT11 invoices are real on Bitcoin Mainnet, but the server-side
+            Lightning sender is intentionally not wired up in this public
+            deployment. Worker payouts are simulated end-to-end and clearly
+            labeled in the UI. The full split between real and simulated is
+            on the{" "}
+            <Link href="/docs" className="underline decoration-amber-400/40 underline-offset-4 hover:decoration-amber-300">
+              docs page
+            </Link>
+            .
+          </span>
+        </p>
+      </div>
+    </section>
+  );
+}
+
 function Tiers() {
   const tiers = [
     {
@@ -100,6 +125,7 @@ function Tiers() {
       ],
       cta: { label: "Read the SDK docs", href: "/docs" },
       highlight: true,
+      footnote: "Sub-30s SLA assumes the production-mode Lightning sender; demo deployment payouts are simulated.",
     },
     {
       name: "Enterprise",

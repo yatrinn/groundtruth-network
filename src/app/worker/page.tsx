@@ -144,6 +144,23 @@ export default function WorkerPage() {
           Pick an open task, answer truthfully, and get paid in seconds.
         </p>
 
+        <div className="mt-6 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-100">
+          <p className="flex items-start gap-2">
+            <span className="mt-1 inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-400" />
+            <span>
+              <strong className="font-semibold text-amber-200">Demo mode.</strong>{" "}
+              Worker payouts are simulated in this public deployment — the
+              server-side Lightning sender is intentionally not wired up. The
+              BOLT11 invoices the agent pays are real Mainnet invoices,
+              everything after that is mocked. See{" "}
+              <Link href="/docs" className="underline decoration-amber-400/40 underline-offset-4 hover:decoration-amber-300">
+                docs
+              </Link>{" "}
+              for the full split.
+            </span>
+          </p>
+        </div>
+
         <div className="mt-6 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
           <label className="text-xs uppercase tracking-wider text-zinc-500">
             Your Lightning Address (LUD-16)
