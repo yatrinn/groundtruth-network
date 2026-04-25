@@ -233,6 +233,12 @@ function Header() {
           <Link href="/worker" className="text-orange-300">
             Worker app
           </Link>
+          <Link href="/docs" className="hover:text-zinc-100">
+            Docs
+          </Link>
+          <Link href="/pricing" className="hover:text-zinc-100">
+            Pricing
+          </Link>
           <a
             href="https://github.com/yatrinn/groundtruth-network"
             target="_blank"

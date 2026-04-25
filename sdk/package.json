@@ -1,0 +1,48 @@
+{
+  "name": "groundtruth-sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for GroundTruth Network — real-time human verification for AI agents, settled on the Bitcoin Lightning Network.",
+  "license": "MIT",
+  "author": "Yannik Trinn",
+  "homepage": "https://groundtruth-network.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yatrinn/groundtruth-network",
+    "directory": "sdk"
+  },
+  "keywords": [
+    "ai-agents",
+    "agentic-payments",
+    "bitcoin",
+    "lightning",
+    "lightning-network",
+    "human-in-the-loop",
+    "verification",
+    "ground-truth",
+    "l402"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "pnpm build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
