@@ -233,6 +233,9 @@ function Header() {
           <Link href="/worker" className="text-orange-300">
             Worker app
           </Link>
+          <Link href="/leaderboard" className="hover:text-zinc-100">
+            Leaderboard
+          </Link>
           <Link href="/docs" className="hover:text-zinc-100">
             Docs
           </Link>

@@ -15,8 +15,8 @@ import type { CreateTaskInput, Task } from "@/lib/types";
 export async function POST(req: NextRequest) {
   // Bound how fast a single IP can fill the tasks table.
   const ip = getClientIp(req);
-  const limited = rateLimit(`tasks-create:${ip}`, {
-    windowMs: 60_000,
+  const limited = await rateLimit(`tasks-create:${ip}`, {
+    windowSeconds: 60,
     maxRequests: 30,
   });
   if (!limited.allowed) {

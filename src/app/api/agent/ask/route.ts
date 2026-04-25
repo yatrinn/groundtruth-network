@@ -21,20 +21,33 @@ interface AskBody {
 }
 
 export async function POST(req: NextRequest) {
-  // Cap public agent calls per IP to keep our OpenAI / Tavily spend
-  // bounded even if the URL gets shared widely. 10 per minute is
-  // ample for human demoers; abusers stop after 10.
+  // Two layers of protection on the most expensive endpoint:
+  //   1. Per-IP cap so a single visitor cannot burn through credits.
+  //   2. Global daily cap so even a coordinated swarm cannot drain
+  //      the OpenAI budget. Both counters live in Postgres so they
+  //      hold across serverless cold starts.
   const ip = getClientIp(req);
-  const limited = rateLimit(`ask:${ip}`, { windowMs: 60_000, maxRequests: 10 });
-  if (!limited.allowed) {
+  const perIp = await rateLimit(`ask:${ip}`, { windowSeconds: 60, maxRequests: 10 });
+  if (!perIp.allowed) {
     return NextResponse.json(
-      { error: "Too many requests. Try again in a minute." },
+      { error: "Too many requests from your IP. Try again in a minute." },
       {
         status: 429,
         headers: {
-          "Retry-After": String(Math.ceil((limited.resetAt - Date.now()) / 1000)),
+          "Retry-After": String(Math.max(1, Math.ceil((perIp.resetAt - Date.now()) / 1000))),
         },
       }
+    );
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const global = await rateLimit(`global:ask:${today}`, {
+    windowSeconds: 24 * 60 * 60,
+    maxRequests: 1000,
+  });
+  if (!global.allowed) {
+    return NextResponse.json(
+      { error: "Daily demo budget reached. The agent will be back tomorrow." },
+      { status: 429 }
     );
   }
 

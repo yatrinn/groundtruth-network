@@ -1,48 +1,61 @@
-// Lightweight in-memory rate limiter.
+// Rate limiter backed by a Postgres table via Supabase RPC.
 //
-// Vercel functions share state inside a warm instance and lose it on
-// cold starts, which is good enough as a first line of defense against
-// casual scraping of our public AI endpoints. A real production setup
-// would back this with Upstash Redis or a Postgres counter; for the
-// hackathon, we just want bounded blast radius if the URL is shared.
+// We learned the hard way that an in-memory Map does not protect
+// serverless functions: every cold start gets a fresh map, and a
+// burst against a popular URL hits enough fresh instances that the
+// limiter is effectively a no-op. Postgres gives us one shared
+// counter all instances see.
+//
+// Usage: pass a key (e.g. "ask:1.2.3.4" or "global:openai-daily"),
+// a window in seconds, and a cap. Returns whether the call is
+// allowed plus the current count and reset timestamp.
 
-interface Bucket {
-  count: number;
-  resetAt: number;
-}
-
-const buckets = new Map<string, Bucket>();
+import { supabaseServer } from "@/lib/supabase";
 
 export interface RateLimitOptions {
-  windowMs: number;
+  /** Sliding window duration in seconds. */
+  windowSeconds: number;
+  /** Maximum number of allowed requests within the window. */
   maxRequests: number;
 }
 
 export interface RateLimitResult {
   allowed: boolean;
-  remaining: number;
+  count: number;
   resetAt: number;
 }
 
-export function rateLimit(
+export async function rateLimit(
   key: string,
   options: RateLimitOptions
-): RateLimitResult {
-  const now = Date.now();
-  let bucket = buckets.get(key);
+): Promise<RateLimitResult> {
+  try {
+    const supabase = supabaseServer();
+    const { data, error } = await supabase.rpc("consume_rate_bucket", {
+      p_key: key,
+      p_window_seconds: options.windowSeconds,
+      p_max_count: options.maxRequests,
+    });
 
-  if (!bucket || bucket.resetAt <= now) {
-    bucket = { count: 0, resetAt: now + options.windowMs };
-    buckets.set(key, bucket);
+    if (error || !data || data.length === 0) {
+      // Fail open — better to keep the demo working than to block on
+      // a transient DB error. Logged for follow-up.
+      // eslint-disable-next-line no-console
+      console.warn("[rate-limit] RPC failed, allowing request:", error?.message);
+      return { allowed: true, count: 0, resetAt: Date.now() };
+    }
+
+    const row = data[0] as { allowed: boolean; current_count: number; reset_at: string };
+    return {
+      allowed: row.allowed,
+      count: row.current_count,
+      resetAt: new Date(row.reset_at).getTime(),
+    };
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.warn("[rate-limit] unexpected error, allowing:", err);
+    return { allowed: true, count: 0, resetAt: Date.now() };
   }
-
-  bucket.count += 1;
-
-  return {
-    allowed: bucket.count <= options.maxRequests,
-    remaining: Math.max(0, options.maxRequests - bucket.count),
-    resetAt: bucket.resetAt,
-  };
 }
 
 // Resolves the caller IP from Vercel-set proxy headers. Falls back to

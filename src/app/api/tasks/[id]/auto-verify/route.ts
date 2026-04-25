@@ -30,8 +30,8 @@ export async function POST(
   // Cap to 5 auto-verifies per minute per IP so this can't be turned
   // into a free LLM-spam endpoint.
   const ip = getClientIp(req);
-  const limited = rateLimit(`auto-verify:${ip}`, {
-    windowMs: 60_000,
+  const limited = await rateLimit(`auto-verify:${ip}`, {
+    windowSeconds: 60,
     maxRequests: 5,
   });
   if (!limited.allowed) {

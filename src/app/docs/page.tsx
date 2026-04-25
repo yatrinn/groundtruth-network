@@ -184,6 +184,7 @@ function Header() {
         <div className="flex items-center gap-6 text-xs text-zinc-400">
           <Link href="/agent" className="hover:text-zinc-100">Agent demo</Link>
           <Link href="/worker" className="hover:text-zinc-100">Worker app</Link>
+          <Link href="/leaderboard" className="hover:text-zinc-100">Leaderboard</Link>
           <Link href="/docs" className="text-orange-300">Docs</Link>
           <Link href="/pricing" className="hover:text-zinc-100">Pricing</Link>
           <a
