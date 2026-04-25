@@ -12,6 +12,7 @@ import { openai, OPENAI_MODEL } from "@/lib/openai";
 import { searchWeb } from "@/lib/tavily";
 import { supabaseServer } from "@/lib/supabase";
 import { createInvoice } from "@/lib/lightning";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
 interface AskBody {
   question: string;
@@ -20,6 +21,23 @@ interface AskBody {
 }
 
 export async function POST(req: NextRequest) {
+  // Cap public agent calls per IP to keep our OpenAI / Tavily spend
+  // bounded even if the URL gets shared widely. 10 per minute is
+  // ample for human demoers; abusers stop after 10.
+  const ip = getClientIp(req);
+  const limited = rateLimit(`ask:${ip}`, { windowMs: 60_000, maxRequests: 10 });
+  if (!limited.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again in a minute." },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(Math.ceil((limited.resetAt - Date.now()) / 1000)),
+        },
+      }
+    );
+  }
+
   let body: AskBody;
   try {
     body = await req.json();

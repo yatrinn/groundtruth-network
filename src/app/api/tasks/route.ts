@@ -9,9 +9,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseServer } from "@/lib/supabase";
 import { createInvoice } from "@/lib/lightning";
+import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import type { CreateTaskInput, Task } from "@/lib/types";
 
 export async function POST(req: NextRequest) {
+  // Bound how fast a single IP can fill the tasks table.
+  const ip = getClientIp(req);
+  const limited = rateLimit(`tasks-create:${ip}`, {
+    windowMs: 60_000,
+    maxRequests: 30,
+  });
+  if (!limited.allowed) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again in a minute." },
+      { status: 429 }
+    );
+  }
+
   let body: CreateTaskInput;
   try {
     body = await req.json();
