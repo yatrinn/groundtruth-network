@@ -42,6 +42,9 @@ export default function InteractiveHero() {
         <span className="rounded-full border border-zinc-700 bg-zinc-900/40 px-3 py-1 text-zinc-300">
           Open source · MIT
         </span>
+        <span className="rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-orange-200">
+          30¢ payouts in 200ms · cards and stablecoins cannot
+        </span>
       </div>
 
       <h1 className="mt-8 max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">

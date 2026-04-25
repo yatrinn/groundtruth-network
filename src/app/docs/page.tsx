@@ -39,23 +39,60 @@ export default function DocsPage() {
 pnpm add groundtruth-sdk`}</Code>
       </Section>
 
-      <Section title="Quick start">
-        <p className="mb-4 text-sm text-zinc-400">
-          Wire your agent up in three lines. The SDK handles the
-          search → judge → escalate → settle loop end to end.
+      <Section title="60-second quickstart">
+        <p className="mb-6 text-sm text-zinc-400">
+          From zero to a verified answer in three steps. No signup, no API
+          key, no rate-limit gate — the public network is open.
         </p>
-        <Code language="ts">{`import { GroundTruth } from "groundtruth-sdk";
 
-const gt = new GroundTruth({ agentId: "my-travel-app" });
+        <ol className="space-y-6">
+          <li>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">
+              Step 1 · Install
+            </p>
+            <p className="mt-2 text-sm text-zinc-400">
+              The SDK is a single dependency, written in TypeScript with full type exports.
+            </p>
+            <Code language="bash">{`npm install groundtruth-sdk`}</Code>
+          </li>
+          <li>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">
+              Step 2 · Initialize
+            </p>
+            <p className="mt-2 text-sm text-zinc-400">
+              One line. The SDK ships pointing at the public network — override
+              <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">apiUrl</code>
+              for self-hosted deployments.
+            </p>
+            <Code language="ts">{`import { GroundTruth } from "groundtruth-sdk";
 
-const result = await gt.verify({
-  question: "Is Cafe Einstein in Berlin open today, or closed for renovation?",
+const gt = new GroundTruth({ agentId: "my-travel-app" });`}</Code>
+          </li>
+          <li>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">
+              Step 3 · Verify
+            </p>
+            <p className="mt-2 text-sm text-zinc-400">
+              Call <code className="font-mono text-orange-200">verify</code>. The platform searches the web, judges its own confidence, and escalates to a paid human only when ground truth is required.
+            </p>
+            <Code language="ts">{`const result = await gt.verify({
+  question: "Is Cafe Einstein in Berlin open today?",
   maxSats: 500,
+  timeoutSeconds: 90,
 });
 
-if (result.kind === "verified") {
-  console.log("Verified by a human:", result.answer);
+switch (result.kind) {
+  case "verified":            console.log("Human verified:", result.answer); break;
+  case "answered_directly":   console.log("Web evidence:", result.answer);   break;
+  case "timeout":             console.log("No worker in time");              break;
+  case "rejected":            console.log("Implausible answer:", result.reason); break;
 }`}</Code>
+          </li>
+        </ol>
+
+        <p className="mt-6 text-xs text-zinc-500">
+          That is the whole API. The full surface — task creation, polling, low-level control — is documented below.
+        </p>
       </Section>
 
       <Section title="Try it live">

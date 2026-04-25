@@ -21,6 +21,7 @@ export default function HomePage() {
       <Thesis />
       <Stats />
       <Pillars />
+      <ScaleAIComparison />
       <Customers />
       <TechnicalEdge />
       <HowItWorks />
@@ -186,6 +187,86 @@ function Pillars() {
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">{it.body}</p>
           </div>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function ScaleAIComparison() {
+  const rows = [
+    {
+      label: "Time-to-answer",
+      gt: "~60 seconds",
+      scale: "Days",
+      mturk: "Days",
+    },
+    {
+      label: "Minimum bounty",
+      gt: "~$0.06",
+      scale: "$0.10+",
+      mturk: "n/a",
+    },
+    {
+      label: "Geographic coverage",
+      gt: "Global, instant",
+      scale: "US-centric",
+      mturk: "US-centric",
+    },
+    {
+      label: "Integration",
+      gt: "npm install · 3 lines",
+      scale: "Sales call",
+      mturk: "Manual",
+    },
+  ];
+
+  return (
+    <section className="border-t border-zinc-900 bg-zinc-950">
+      <div className="mx-auto max-w-5xl px-6 py-20">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-orange-400">
+          Why not Scale AI
+        </p>
+        <h2 className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+          Built for a different shape of demand.
+        </h2>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400">
+          Scale AI is excellent for batch annotation and enterprise contracts.
+          What it cannot do is ship a 30-cent verification to an agent in
+          Berlin in 60 seconds — that is the only thing GroundTruth does, and
+          we do it because Lightning is the only payment rail in the world that
+          makes it economically possible.
+        </p>
+
+        <div className="mt-10 overflow-x-auto rounded-xl border border-zinc-800">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900/40 text-[10px] uppercase tracking-[0.15em] text-zinc-500">
+                <th className="px-4 py-3">Capability</th>
+                <th className="px-4 py-3 text-orange-300">GroundTruth</th>
+                <th className="px-4 py-3">Scale AI</th>
+                <th className="px-4 py-3">Mechanical Turk</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/60">
+              {rows.map((r) => (
+                <tr key={r.label}>
+                  <td className="px-4 py-3 font-medium text-zinc-100">{r.label}</td>
+                  <td className="px-4 py-3 text-emerald-200">{r.gt}</td>
+                  <td className="px-4 py-3 text-zinc-400">{r.scale}</td>
+                  <td className="px-4 py-3 text-zinc-400">{r.mturk}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="mt-4 text-xs text-zinc-500">
+          Full feature parity table on{" "}
+          <Link href="/pricing" className="text-zinc-300 underline-offset-4 hover:underline">
+            pricing
+          </Link>
+          .
+        </p>
       </div>
     </section>
   );
