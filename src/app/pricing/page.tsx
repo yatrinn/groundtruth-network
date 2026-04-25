@@ -97,7 +97,7 @@ function Tiers() {
         "Reputation graph access",
         "10k–1M verifications / month",
       ],
-      cta: { label: "Talk to us", href: "mailto:hello@groundtruth.network" },
+      cta: { label: "Read the SDK docs", href: "/docs" },
       highlight: true,
     },
     {
@@ -110,7 +110,10 @@ function Tiers() {
         "SOC 2 / GDPR readiness on request",
         "1M+ verifications / month",
       ],
-      cta: { label: "Contact sales", href: "mailto:hello@groundtruth.network" },
+      cta: {
+        label: "Open a GitHub discussion",
+        href: "https://github.com/yatrinn/groundtruth-network/issues/new",
+      },
       highlight: false,
     },
   ];

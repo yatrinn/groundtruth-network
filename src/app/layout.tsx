@@ -15,15 +15,23 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "GroundTruth Network — Real-time human verification for AI agents",
   description:
-    "AI agents pay humans worldwide to verify what is actually true, settled instantly on the Bitcoin Lightning Network. Built for HackNation 2026.",
+    "AI agents pay humans worldwide to verify what is actually true, settled in seconds on the Bitcoin Lightning Network.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://groundtruth-network.vercel.app"
   ),
   openGraph: {
     title: "GroundTruth Network",
     description:
-      "Lightning-powered marketplace where AI agents pay humans for ground-truth verification.",
+      "AI agents pay humans worldwide to verify what is actually true, settled in seconds on the Bitcoin Lightning Network.",
     type: "website",
+    url: "/",
+    siteName: "GroundTruth Network",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GroundTruth Network",
+    description:
+      "AI agents pay humans worldwide to verify what is actually true, settled in seconds on the Bitcoin Lightning Network.",
   },
 };
 

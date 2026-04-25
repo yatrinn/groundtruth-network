@@ -22,8 +22,12 @@ export default function NetworkStats({ className = "" }: { className?: string })
       supabaseBrowser
         .from("tasks")
         .select("bounty_sats", { count: "exact" })
-        .eq("status", "verified"),
-      supabaseBrowser.from("workers").select("session_id", { count: "exact", head: true }),
+        .eq("status", "verified")
+        .neq("worker_session_id", "demo-auto-verifier"),
+      supabaseBrowser
+        .from("workers")
+        .select("session_id", { count: "exact", head: true })
+        .neq("session_id", "demo-auto-verifier"),
     ]);
 
     const sats = (verifiedRes.data ?? []).reduce(

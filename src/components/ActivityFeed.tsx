@@ -33,7 +33,12 @@ export default function ActivityFeed({ limit = 6, className = "" }: Props) {
         { event: "UPDATE", schema: "public", table: "tasks" },
         (payload) => {
           const next = payload.new as Task;
-          if (next.status === "verified") {
+          // Demo auto-verifier tasks are excluded from the public feed —
+          // only real human verifications drive network activity.
+          if (
+            next.status === "verified" &&
+            next.worker_session_id !== "demo-auto-verifier"
+          ) {
             setTasks((prev) => [next, ...prev.filter((t) => t.id !== next.id)].slice(0, limit));
           }
         }

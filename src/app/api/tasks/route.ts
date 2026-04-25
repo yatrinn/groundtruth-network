@@ -86,12 +86,21 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "20", 10), 100);
 
   const supabase = supabaseServer();
-  const { data, error } = await supabase
+  let query = supabase
     .from("tasks")
     .select("*")
     .eq("status", status)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  // Public listing of verified tasks excludes the demo auto-verifier
+  // entirely — only real human verifications show up in the network
+  // activity feed and stats.
+  if (status === "verified") {
+    query = query.neq("worker_session_id", "demo-auto-verifier");
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

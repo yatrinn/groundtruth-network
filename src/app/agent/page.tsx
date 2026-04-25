@@ -161,6 +161,25 @@ export default function AgentPage() {
     };
   }, [stage]);
 
+  // Demo-mode auto-verifier. If a single-tab visitor asks a question
+  // and no real worker claims within 30 seconds, fire the simulated
+  // worker so the loop completes. The verified card renders a clear
+  // "Simulated demo answer" badge — judges always know what they are
+  // looking at.
+  useEffect(() => {
+    if (stage.kind !== "needs_human") return;
+    const taskId = stage.task.id;
+    const timer = setTimeout(async () => {
+      // If the user has already moved off needs_human, do nothing.
+      try {
+        await fetch(`/api/tasks/${taskId}/auto-verify`, { method: "POST" });
+      } catch {
+        // Realtime subscription will ignore this; ok.
+      }
+    }, 30_000);
+    return () => clearTimeout(timer);
+  }, [stage]);
+
   async function ask(q?: string) {
     const text = (q ?? question).trim();
     if (!text) return;
@@ -416,18 +435,43 @@ function ConversationStage({ stage }: { stage: Stage }) {
           reasoning={stage.reasoning}
         />
       );
-    case "verified":
+    case "verified": {
+      const isAuto = stage.task.worker_session_id === "demo-auto-verifier";
       return (
         <div className="space-y-3">
           <ThinkingPipeline phases={["search", "draft", "judge", "post", "wait", "verify"]} current={5} />
           <Bubble
             role="agent"
-            body={`Verified by a human worker: ${stage.task.submitted_answer}`}
+            body={
+              isAuto
+                ? stage.task.submitted_answer ?? ""
+                : `Verified by a human worker: ${stage.task.submitted_answer}`
+            }
           />
+          {isAuto && <SimulatedBadge />}
           <TaskCard task={stage.task} />
         </div>
       );
+    }
   }
+}
+
+function SimulatedBadge() {
+  return (
+    <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200">
+      <p className="flex items-center gap-2 font-medium">
+        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
+        Simulated demo answer · no human worker available right now
+      </p>
+      <p className="mt-1.5 text-amber-100/70">
+        In production this slot is filled by a real worker on the ground who
+        scans the task feed, verifies in person, and claims the Lightning
+        bounty. For this hackathon demo we fall back to a web-grounded
+        simulation after 30 seconds so single-tab visitors still see a
+        complete flow.
+      </p>
+    </div>
+  );
 }
 
 function NeedsHumanState({
