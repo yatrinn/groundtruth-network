@@ -135,7 +135,10 @@ async function draftAndJudge(
         content: `Question:\n${question}\n\nWeb evidence:\n${evidence}`,
       },
     ],
-    max_completion_tokens: 350,
+    // gpt-5.x reasoning models count internal thinking against this
+    // budget; 1500 leaves enough room for both the thinking pass and
+    // a complete JSON response.
+    max_completion_tokens: 1500,
     response_format: { type: "json_object" },
   });
 

@@ -20,4 +20,8 @@ if (!apiKey) {
 
 export const openai = new OpenAI({ apiKey });
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.5-thinking";
+// Default to the latest GA model (gpt-5.5, released April 2026). Override
+// via OPENAI_MODEL env var. Reasoning-style models include internal
+// thinking tokens in `max_completion_tokens`, so call sites budget
+// generously — see usage in /api/agent/ask.
+export const OPENAI_MODEL = process.env.OPENAI_MODEL ?? "gpt-5.5";

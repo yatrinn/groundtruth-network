@@ -171,7 +171,8 @@ async function isAnswerPlausible(
           content: `Task:\n${prompt}\n\nAnswer:\n${answer}`,
         },
       ],
-      max_completion_tokens: 60,
+      // Reasoning-model headroom — see comment in /api/agent/ask.
+      max_completion_tokens: 400,
     });
     const verdict = res.choices[0]?.message?.content?.trim() ?? "YES";
     if (verdict.toUpperCase().startsWith("YES")) return { ok: true };
