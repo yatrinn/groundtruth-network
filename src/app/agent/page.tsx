@@ -14,9 +14,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { supabaseBrowser } from "@/lib/supabase";
 import { formatSats, satsToUsd, timeAgo } from "@/lib/utils";
 import type { Task } from "@/lib/types";
+
+interface LightningInvoice {
+  bolt11: string;
+  amount_sats: number;
+  payment_hash: string;
+  expires_at: string;
+}
 
 // ---------------------------------------------------------------
 // Personas
@@ -88,7 +96,7 @@ type Stage =
   | { kind: "idle" }
   | { kind: "thinking"; phases: ThinkingPhase[]; current: number }
   | { kind: "answered_directly"; answer: string; reasoning: string; sources: { title: string; url: string }[] }
-  | { kind: "needs_human"; task: Task; draft: string; reasoning: string }
+  | { kind: "needs_human"; task: Task; invoice: LightningInvoice; draft: string; reasoning: string }
   | { kind: "verified"; task: Task; draft: string };
 
 const PHASE_META: Record<ThinkingPhase, { icon: string; label: string }> = {
@@ -191,6 +199,7 @@ export default function AgentPage() {
       setStage({
         kind: "needs_human",
         task: data.task,
+        invoice: data.invoice,
         draft: data.draft,
         reasoning: data.reasoning,
       });
@@ -394,7 +403,13 @@ function ConversationStage({ stage }: { stage: Stage }) {
         </div>
       );
     case "needs_human":
-      return <NeedsHumanState task={stage.task} reasoning={stage.reasoning} />;
+      return (
+        <NeedsHumanState
+          task={stage.task}
+          invoice={stage.invoice}
+          reasoning={stage.reasoning}
+        />
+      );
     case "verified":
       return (
         <div className="space-y-3">
@@ -409,7 +424,15 @@ function ConversationStage({ stage }: { stage: Stage }) {
   }
 }
 
-function NeedsHumanState({ task, reasoning }: { task: Task; reasoning: string }) {
+function NeedsHumanState({
+  task,
+  invoice,
+  reasoning,
+}: {
+  task: Task;
+  invoice: LightningInvoice;
+  reasoning: string;
+}) {
   // While we are waiting for a worker, animate through "post" -> "wait".
   const phases: ThinkingPhase[] = ["search", "draft", "judge", "post", "wait"];
   return (
@@ -419,7 +442,68 @@ function NeedsHumanState({ task, reasoning }: { task: Task; reasoning: string })
         role="agent"
         body={`I cannot answer this with confidence — ${reasoning} Posting a verification task to a human worker now.`}
       />
+      <InvoiceCard invoice={invoice} />
       <TaskCard task={task} pending />
+    </div>
+  );
+}
+
+// Real BOLT11 QR for the bounty escrow. Scannable with any Lightning
+// wallet on Bitcoin Mainnet. The point is not to require payment to
+// proceed (we mock the escrow) — it is to make visible that the rails
+// underneath are real, not a screenshot.
+function InvoiceCard({ invoice }: { invoice: LightningInvoice }) {
+  const [copied, setCopied] = useState(false);
+  const isMock = invoice.bolt11.startsWith("lnbc") && invoice.bolt11.includes("mock");
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(invoice.bolt11);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-orange-500/30 bg-gradient-to-br from-orange-500/10 to-zinc-900/50 p-5">
+      <div className="flex items-center justify-between">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-300">
+          {isMock ? "Lightning Invoice (Mock)" : "Lightning Mainnet · Bounty escrow"}
+        </p>
+        <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-200">
+          {formatSats(invoice.amount_sats)}
+        </span>
+      </div>
+
+      <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+        <div className="flex-shrink-0 rounded-lg bg-white p-3">
+          <QRCodeSVG
+            value={invoice.bolt11}
+            size={128}
+            level="M"
+            bgColor="#ffffff"
+            fgColor="#000000"
+          />
+        </div>
+        <div className="min-w-0 flex-1 text-xs">
+          <p className="text-zinc-400">
+            {isMock
+              ? "Demo mode — switch the platform Lightning Address env var to scan a real Mainnet invoice here."
+              : "Scan with any Lightning wallet on Bitcoin Mainnet to fund this bounty in real time."}
+          </p>
+          <button
+            onClick={copy}
+            className="mt-3 break-all rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-left font-mono text-[10px] text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+          >
+            {copied ? "Copied invoice" : `${invoice.bolt11.slice(0, 50)}…`}
+          </button>
+          <p className="mt-2 text-[10px] text-zinc-600">
+            payment_hash: {invoice.payment_hash.slice(0, 32)}…
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

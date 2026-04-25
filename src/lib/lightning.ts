@@ -40,12 +40,40 @@ const isMock =
   !process.env.MDK_API_KEY || process.env.MDK_NETWORK === "mock" || process.env.MDK_NETWORK === "testnet";
 
 // Create an invoice the agent can pay to fund a task's bounty.
+//
+// We always try to generate a *real* BOLT11 against the platform's
+// configured Lightning Address (NEXT_PUBLIC_PLATFORM_LN_ADDRESS or the
+// demo worker address as fallback). This way the QR shown in the agent
+// UI is scannable on Bitcoin Mainnet — the rails are real even when
+// the rest of the demo runs in mock mode. If resolution fails (offline,
+// typo, etc.) we fall back to a synthetic invoice so the flow never
+// blocks.
 export async function createInvoice(
   amount_sats: number,
   memo: string
 ): Promise<LightningInvoice> {
-  if (isMock) return mockInvoice(amount_sats, memo);
-  return realCreateInvoice(amount_sats, memo);
+  const platformAddress =
+    process.env.NEXT_PUBLIC_PLATFORM_LN_ADDRESS ??
+    process.env.NEXT_PUBLIC_DEMO_WORKER_LN_ADDRESS;
+  if (platformAddress) {
+    try {
+      const ln = new LightningAddress(platformAddress);
+      await ln.fetch();
+      const invoice = await ln.requestInvoice({
+        satoshi: amount_sats,
+        comment: memo.slice(0, 64),
+      });
+      return {
+        bolt11: invoice.paymentRequest,
+        amount_sats,
+        payment_hash: invoice.paymentHash ?? generateRandomHex(32),
+        expires_at: new Date(Date.now() + 600_000).toISOString(),
+      };
+    } catch {
+      // LNURL-pay endpoint unreachable — degrade gracefully.
+    }
+  }
+  return mockInvoice(amount_sats, memo);
 }
 
 // Confirm an invoice has been paid (used when an agent claims to have
