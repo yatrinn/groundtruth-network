@@ -122,7 +122,7 @@ export default function WorkerPage() {
       return;
     }
     setToast(
-      `Paid ${formatSats(active.bounty_sats)} to ${lnAddress}.`
+      `Simulated payout of ${formatSats(active.bounty_sats)} to ${lnAddress}. Server-side Lightning sender is the post-hackathon swap.`
     );
     setActive(null);
   }
