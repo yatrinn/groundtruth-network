@@ -7,6 +7,8 @@
 // and /worker (claim a task and earn sats).
 
 import Link from "next/link";
+import ActivityFeed from "@/components/ActivityFeed";
+import NetworkStats from "@/components/NetworkStats";
 
 export default function HomePage() {
   return (
@@ -41,6 +43,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-5xl px-6 pb-12">
+        <NetworkStats />
+      </section>
+
       <section className="mx-auto max-w-5xl border-t border-zinc-900 px-6 py-16">
         <div className="grid gap-10 sm:grid-cols-3">
           <Card
@@ -56,6 +62,11 @@ export default function HomePage() {
             body="Human-in-the-loop AI grows from $6.7B in 2026 to $16.4B by 2030. Scale AI is slow and US-only. We are real-time and global."
           />
         </div>
+      </section>
+
+      <section className="mx-auto max-w-5xl border-t border-zinc-900 px-6 py-16">
+        <h2 className="mb-6 text-2xl font-semibold">Live on the network</h2>
+        <ActivityFeed limit={6} />
       </section>
 
       <section className="mx-auto max-w-5xl border-t border-zinc-900 px-6 py-16">

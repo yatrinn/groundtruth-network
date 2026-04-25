@@ -1,39 +1,133 @@
 // Agent demo page.
-// A judge types a question. An honest AI travel concierge tries to answer
-// it with web search + reasoning. If the question requires real-time
-// ground truth (open / closed, current wait, current availability), the
-// agent admits it and posts a Lightning-funded task to GroundTruth.
-// The page then watches the task in realtime until a worker submits.
+//
+// A judge picks a persona (AI travel concierge, shopping agent, sales
+// tool, trading bot), types or picks a sample question, and watches an
+// honest agent decide whether it can answer or whether it needs to pay
+// a human via GroundTruth.
+//
+// The thinking pipeline is shown as explicit phases so judges can see
+// the system reason about its own confidence: search the web, draft an
+// answer, judge confidence, and either return the answer or post a
+// Lightning-funded verification task to a human worker.
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { supabaseBrowser } from "@/lib/supabase";
 import { formatSats, satsToUsd, timeAgo } from "@/lib/utils";
 import type { Task } from "@/lib/types";
 
+// ---------------------------------------------------------------
+// Personas
+// Distinct agent profiles so judges can see this isn't a one-trick
+// demo. Every persona has questions that *will* trigger the human
+// verification path because they require real-time ground truth.
+// ---------------------------------------------------------------
+interface Persona {
+  id: string;
+  label: string;
+  emoji: string;
+  description: string;
+  questions: string[];
+}
+
+const PERSONAS: Persona[] = [
+  {
+    id: "travel",
+    label: "AI Travel Concierge",
+    emoji: "✈",
+    description: "Books trips and answers about restaurants, hotels, and live wait times.",
+    questions: [
+      "How long is the line at Berghain in Berlin right now?",
+      "Is Cafe Einstein on Kurfuerstenstrasse open today, or closed for renovation?",
+      "What is the current wait time at Pho 2000 in San Francisco's Tenderloin?",
+    ],
+  },
+  {
+    id: "shopping",
+    label: "AI Shopping Assistant",
+    emoji: "🛒",
+    description: "Verifies local product availability and pricing in real time.",
+    questions: [
+      "Is the Apple Store on Kurfuerstendamm in Berlin selling iPhone 17 Pro Max in space black today?",
+      "Does the Nike flagship in Tokyo Shibuya have Air Jordan 1 Mid in size US 10 in stock right now?",
+      "What is the actual checkout price for organic milk at Lidl in Munich today?",
+    ],
+  },
+  {
+    id: "sales",
+    label: "AI Sales Researcher",
+    emoji: "📈",
+    description: "Verifies decision-makers, company status, and live business signals.",
+    questions: [
+      "Is the office of Acme GmbH at Friedrichstrasse 100 actually still operating, or is the building empty?",
+      "Confirm whether the CEO of a target startup is at the SaaStr Annual conference today.",
+      "Has the construction crane on the Mercedes-Benz factory in Sindelfingen moved this week?",
+    ],
+  },
+  {
+    id: "trading",
+    label: "AI Trading Agent",
+    emoji: "📊",
+    description: "Cross-checks satellite, supply chain, and on-the-ground signals.",
+    questions: [
+      "Is the BYD Shenzhen factory parking lot full or empty as of this morning?",
+      "Are queues at the Costco Mexico City fuel station longer than yesterday?",
+      "Is the Volkswagen plant in Wolfsburg currently running a night shift?",
+    ],
+  },
+];
+
+// ---------------------------------------------------------------
+// Stage state machine
+// ---------------------------------------------------------------
+type ThinkingPhase = "search" | "draft" | "judge" | "post" | "wait" | "verify";
+
 type Stage =
   | { kind: "idle" }
-  | { kind: "thinking" }
+  | { kind: "thinking"; phases: ThinkingPhase[]; current: number }
   | { kind: "answered_directly"; answer: string; reasoning: string; sources: { title: string; url: string }[] }
   | { kind: "needs_human"; task: Task; draft: string; reasoning: string }
   | { kind: "verified"; task: Task; draft: string };
 
-const SAMPLE_QUESTIONS = [
-  "How long is the line at Berghain right now?",
-  "Is Cafe Einstein in Berlin open today, or closed for renovation?",
-  "What's the current wait time at Pho 2000 in San Francisco?",
-  "Is the Apple Store on Kurfuerstendamm still selling iPhone 17 Pro Max in space black today?",
-];
+const PHASE_META: Record<ThinkingPhase, { icon: string; label: string }> = {
+  search: { icon: "🔍", label: "Searching the web for evidence" },
+  draft: { icon: "✍", label: "Drafting candidate answer" },
+  judge: { icon: "⚖", label: "Judging confidence against ground-truth requirements" },
+  post: { icon: "⚡", label: "Posting Lightning-funded task to GroundTruth" },
+  wait: { icon: "👁", label: "Waiting for a human worker to verify" },
+  verify: { icon: "✅", label: "Verified by a human" },
+};
 
 export default function AgentPage() {
+  const [persona, setPersona] = useState<Persona>(PERSONAS[0]);
   const [question, setQuestion] = useState("");
   const [bounty, setBounty] = useState(500);
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
+  const phaseTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Subscribe to changes on the active task so we can flip into the
-  // verified state without polling.
+  // Run a small client-side pipeline of "thinking" phases while the
+  // /api/agent/ask request is in flight. Visual only — the real
+  // decision happens on the server. We freeze the pipeline at the
+  // last server-bound phase until the response lands.
+  useEffect(() => {
+    if (stage.kind !== "thinking") return;
+    if (phaseTimer.current) clearInterval(phaseTimer.current);
+    phaseTimer.current = setInterval(() => {
+      setStage((prev) => {
+        if (prev.kind !== "thinking") return prev;
+        if (prev.current >= prev.phases.length - 1) return prev;
+        return { ...prev, current: prev.current + 1 };
+      });
+    }, 750);
+    return () => {
+      if (phaseTimer.current) clearInterval(phaseTimer.current);
+    };
+  }, [stage.kind]);
+
+  // While the user is in needs_human, watch the task for the worker's
+  // submission and flip into verified.
   useEffect(() => {
     if (stage.kind !== "needs_human") return;
     const id = stage.task.id;
@@ -63,12 +157,16 @@ export default function AgentPage() {
     const text = (q ?? question).trim();
     if (!text) return;
     setQuestion(text);
-    setStage({ kind: "thinking" });
+    setStage({ kind: "thinking", phases: ["search", "draft", "judge"], current: 0 });
 
     const res = await fetch("/api/agent/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: text, bounty_sats: bounty }),
+      body: JSON.stringify({
+        question: text,
+        bounty_sats: bounty,
+        agent_id: `${persona.id}-demo`,
+      }),
     });
     const data = await res.json();
 
@@ -109,19 +207,21 @@ export default function AgentPage() {
       <Header />
 
       <section className="mx-auto max-w-3xl px-6 py-12">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <PersonaSelector value={persona} onChange={setPersona} />
+
+        <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
           <p className="text-xs uppercase tracking-wider text-zinc-500">
-            Demo · AI travel concierge
+            Demo · {persona.label}
           </p>
           <h1 className="mt-2 text-2xl font-semibold">
-            Ask anything. The agent will only answer what it can actually verify.
+            Ask anything. The agent only answers what it can actually verify.
           </h1>
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Try: How long is the line at Berghain right now?"
+              placeholder={`Try: ${persona.questions[0]}`}
               className="flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm placeholder-zinc-500 outline-none focus:border-orange-500/60"
               onKeyDown={(e) => {
                 if (e.key === "Enter") ask();
@@ -157,8 +257,8 @@ export default function AgentPage() {
           </div>
 
           {stage.kind === "idle" && (
-            <div className="mt-6 grid gap-2 sm:grid-cols-2">
-              {SAMPLE_QUESTIONS.map((q) => (
+            <div className="mt-6 grid gap-2 sm:grid-cols-1">
+              {persona.questions.map((q) => (
                 <button
                   key={q}
                   onClick={() => ask(q)}
@@ -208,6 +308,37 @@ function Header() {
   );
 }
 
+function PersonaSelector({
+  value,
+  onChange,
+}: {
+  value: Persona;
+  onChange: (p: Persona) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {PERSONAS.map((p) => {
+        const active = value.id === p.id;
+        return (
+          <button
+            key={p.id}
+            onClick={() => onChange(p)}
+            className={`rounded-lg border px-3 py-3 text-left text-xs transition ${
+              active
+                ? "border-orange-500/60 bg-orange-500/10 text-zinc-100"
+                : "border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-zinc-600"
+            }`}
+          >
+            <span className="mr-1.5">{p.emoji}</span>
+            <span className="font-semibold">{p.label}</span>
+            <p className="mt-1 text-[11px] text-zinc-500">{p.description}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Bubble({ role, body }: { role: "user" | "agent"; body: string }) {
   const isUser = role === "user";
   return (
@@ -230,9 +361,7 @@ function ConversationStage({ stage }: { stage: Stage }) {
     case "idle":
       return null;
     case "thinking":
-      return (
-        <Bubble role="agent" body="Thinking… searching the web and judging confidence." />
-      );
+      return <ThinkingPipeline phases={stage.phases} current={stage.current} />;
     case "answered_directly":
       return (
         <div className="space-y-3">
@@ -257,18 +386,11 @@ function ConversationStage({ stage }: { stage: Stage }) {
         </div>
       );
     case "needs_human":
-      return (
-        <div className="space-y-3">
-          <Bubble
-            role="agent"
-            body={`I cannot answer this with confidence — ${stage.reasoning} Posting a verification task to a human worker now.`}
-          />
-          <TaskCard task={stage.task} pending />
-        </div>
-      );
+      return <NeedsHumanState task={stage.task} reasoning={stage.reasoning} />;
     case "verified":
       return (
         <div className="space-y-3">
+          <ThinkingPipeline phases={["search", "draft", "judge", "post", "wait", "verify"]} current={5} />
           <Bubble
             role="agent"
             body={`Verified by a human worker: ${stage.task.submitted_answer}`}
@@ -279,7 +401,76 @@ function ConversationStage({ stage }: { stage: Stage }) {
   }
 }
 
+function NeedsHumanState({ task, reasoning }: { task: Task; reasoning: string }) {
+  // While we are waiting for a worker, animate through "post" -> "wait".
+  const phases: ThinkingPhase[] = ["search", "draft", "judge", "post", "wait"];
+  return (
+    <div className="space-y-3">
+      <ThinkingPipeline phases={phases} current={4} />
+      <Bubble
+        role="agent"
+        body={`I cannot answer this with confidence — ${reasoning} Posting a verification task to a human worker now.`}
+      />
+      <TaskCard task={task} pending />
+    </div>
+  );
+}
+
+function ThinkingPipeline({
+  phases,
+  current,
+}: {
+  phases: ThinkingPhase[];
+  current: number;
+}) {
+  return (
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
+      <ol className="space-y-2">
+        {phases.map((p, i) => {
+          const meta = PHASE_META[p];
+          const state = i < current ? "done" : i === current ? "active" : "pending";
+          return (
+            <li
+              key={p}
+              className={`flex items-center gap-3 text-sm transition ${
+                state === "pending"
+                  ? "text-zinc-600"
+                  : state === "active"
+                    ? "text-zinc-100"
+                    : "text-zinc-400"
+              }`}
+            >
+              <span
+                className={`inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs ${
+                  state === "active"
+                    ? "animate-pulse border border-orange-500/60 bg-orange-500/10 text-orange-300"
+                    : state === "done"
+                      ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      : "border border-zinc-800"
+                }`}
+              >
+                {state === "done" ? "✓" : meta.icon}
+              </span>
+              <span>{meta.label}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+const PERSONA_BY_ID: Record<string, Persona> = PERSONAS.reduce(
+  (acc, p) => {
+    acc[p.id] = p;
+    return acc;
+  },
+  {} as Record<string, Persona>
+);
+
 function TaskCard({ task, pending }: { task: Task; pending?: boolean }) {
+  const personaId = task.agent_id?.replace("-demo", "") ?? "";
+  const persona = PERSONA_BY_ID[personaId];
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 text-xs">
       <div className="flex items-center justify-between">
@@ -297,6 +488,11 @@ function TaskCard({ task, pending }: { task: Task; pending?: boolean }) {
         </span>
       </div>
       <p className="mt-2 text-zinc-300">{task.prompt}</p>
+      {persona && (
+        <p className="mt-1 text-[10px] uppercase tracking-wider text-zinc-500">
+          {persona.emoji} {persona.label}
+        </p>
+      )}
       <div className="mt-3 grid grid-cols-2 gap-2 text-zinc-500">
         <div>
           Bounty:{" "}
