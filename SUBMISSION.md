@@ -99,16 +99,28 @@ Three things together create our moat:
 
 ## 6. Results & Impact
 
-**Built in this 24-hour sprint, all live and verifiable in the repo:**
-- End-to-end working flow: agent posts → worker claims → worker submits → Lightning payout
-- Two production-grade UIs: agent demo with persona selector and animated reasoning pipeline; worker feed with realtime updates and a one-click submit experience
-- Real LUD-16 resolution exercised against a live Wallet of Satoshi address
-- Honest agent reference implementation that searches the web with Tavily, drafts an answer, judges its own confidence, and only escalates to a paid human when the question genuinely requires real-time ground truth
-- Plausibility gate (LLM-as-judge) before any sats move
-- Live network stats and activity feed that will tick during the demo
+**Built in this 24-hour sprint, all live and verifiable at https://groundtruth-network.vercel.app:**
+
+Surface — seven public routes, every one functional:
+- `/` — landing with thesis, three pillars, five named buyer segments, technical edge, live network stats
+- `/agent` — interactive demo with four personas, animated thinking pipeline, real BOLT11 invoice QR rendered as a Mainnet-scannable image
+- `/worker` — realtime task feed, one-click claim, plausibility-gated submit, instant payout
+- `/leaderboard` — public worker reputation graph ranked by total earned sats
+- `/docs` — full SDK documentation with a live API playground that posts to production
+- `/pricing` — three tiers, an interactive cost calculator, side-by-side vs Scale AI / MTurk / in-house
+- `/api/*` — five JSON endpoints with proper status machines, race-safe transitions, and CORS-clean responses
+
+Engineering — every claim is backed by code in the repo:
+- TypeScript SDK (`groundtruth-sdk`) shipped at `sdk/` with a class-based client, four-state discriminated VerifyResult, examples, and a strict tsconfig
+- Real LUD-16 resolution and BOLT11 invoice generation against live worker wallets
+- Honest agent reference: Tavily-grounded draft, GPT-5.5 self-confidence judgment, escalation only when ground truth is required
+- Server-side LLM-as-judge plausibility gate before any sats move
+- Demo-mode auto-verifier so single-tab visitors see the full loop, transparently labeled as simulated
+- Postgres-backed rate limiter with per-IP and global daily caps protecting AI spend across serverless cold starts
+- Realtime task fan-out via Postgres triggers and Supabase channels — no polling
 
 **Why this matters beyond a hackathon:**
 
 If agents are going to operate the next economy, they need the same affordances people have: a way to ask, a way to pay, a way to be paid. We have built a small but honest version of that affordance for the verification half of the problem — the half nobody else is touching, and the half that decides whether the agent economy ships truth or noise.
 
-The market is real, the wedge is durable, and the rail (Lightning) is the only one in the world that makes it possible. Everything we built today is one engineering swap away from settling on Bitcoin mainnet at the speed of any future agent's curiosity.
+The market is real, the wedge is durable, and the rail (Lightning) is the only one in the world that makes it possible. Everything we built today is one engineering swap away from settling on Bitcoin Mainnet at the speed of any future agent's curiosity.
