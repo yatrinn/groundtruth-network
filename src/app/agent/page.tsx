@@ -290,18 +290,26 @@ export default function AgentPage() {
 
 function Header() {
   return (
-    <header className="border-b border-zinc-900 px-6 py-4">
-      <div className="mx-auto flex max-w-5xl items-center justify-between">
+    <header className="border-b border-zinc-900/80 bg-zinc-950/60 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/" className="text-sm font-semibold tracking-tight">
-          GroundTruth
+          GroundTruth<span className="text-orange-400">.</span>
         </Link>
-        <div className="flex gap-4 text-xs">
+        <div className="flex items-center gap-6 text-xs text-zinc-400">
           <Link href="/agent" className="text-orange-300">
-            Agent
+            Agent demo
           </Link>
-          <Link href="/worker" className="text-zinc-400 hover:text-zinc-200">
-            Worker
+          <Link href="/worker" className="hover:text-zinc-100">
+            Worker app
           </Link>
+          <a
+            href="https://github.com/yatrinn/groundtruth-network"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-zinc-100"
+          >
+            GitHub
+          </a>
         </div>
       </div>
     </header>
