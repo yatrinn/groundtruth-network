@@ -2,7 +2,7 @@
 
 **Real-time human verification for AI agents, settled instantly on the Bitcoin Lightning Network.**
 
-Built for [HackNation 2026](https://hack-nation.ai) — Challenge 02: *Earn in the Agent Economy*, powered by [Spiral](https://spiral.xyz).
+Live at **[groundtruth-network.vercel.app](https://groundtruth-network.vercel.app)** · Open source under MIT.
 
 ---
 
@@ -105,8 +105,12 @@ groundtruth-network/
 
 ## License
 
-MIT — built and shipped during HackNation 2026.
+MIT.
 
 ## Author
 
 Yannik Trinn — [yatrinn on GitHub](https://github.com/yatrinn)
+
+---
+
+*Originally shipped during HackNation 2026, Challenge 02 powered by [Spiral](https://spiral.xyz).*

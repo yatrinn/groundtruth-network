@@ -114,6 +114,66 @@ export default function AgentPage() {
   const [bounty, setBounty] = useState(500);
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
   const phaseTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const autoStarted = useRef(false);
+
+  // Deep-link support: /agent?q=... auto-runs the question once. This
+  // is what the landing-page input uses to hand off into the full
+  // demo with one click. We read window.location directly to avoid
+  // the Suspense boundary requirement of useSearchParams in static
+  // pre-rendered routes.
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const initialQuestion = params.get("q");
+    if (initialQuestion && initialQuestion.trim()) {
+      autoStarted.current = true;
+      setQuestion(initialQuestion);
+      // Defer one tick so initial render commits before we kick off.
+      setTimeout(() => askInternal(initialQuestion), 50);
+    }
+  }, []);
+
+  // Internal version of ask() that takes the text directly without
+  // depending on React state — used by the deep-link auto-start.
+  async function askInternal(text: string) {
+    setStage({ kind: "thinking", phases: ["search", "draft", "judge"], current: 0 });
+    const res = await fetch("/api/agent/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: text,
+        bounty_sats: bounty,
+        agent_id: `${persona.id}-demo`,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setStage({
+        kind: "answered_directly",
+        answer: `Error: ${data.error ?? "unknown"}`,
+        reasoning: "",
+        sources: [],
+      });
+      return;
+    }
+    if (data.verdict === "answered_directly") {
+      setStage({
+        kind: "answered_directly",
+        answer: data.answer,
+        reasoning: data.reasoning,
+        sources: data.sources ?? [],
+      });
+    } else {
+      setStage({
+        kind: "needs_human",
+        task: data.task,
+        invoice: data.invoice,
+        draft: data.draft,
+        reasoning: data.reasoning,
+      });
+    }
+  }
 
   // Run a small client-side pipeline of "thinking" phases while the
   // /api/agent/ask request is in flight. Visual only — the real

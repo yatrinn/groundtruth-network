@@ -9,13 +9,15 @@
 import Link from "next/link";
 import ActivityFeed from "@/components/ActivityFeed";
 import NetworkStats from "@/components/NetworkStats";
+import InteractiveHero from "@/components/InteractiveHero";
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-orange-500/30">
       <SiteHeader />
-      <Hero />
+      <InteractiveHero />
       <TrustBar />
+      <Subhero />
       <Thesis />
       <Stats />
       <Pillars />
@@ -56,32 +58,32 @@ function SiteHeader() {
   );
 }
 
-function Hero() {
+// The original static Hero is replaced by InteractiveHero. We keep
+// this section for the longer-form pitch under the fold.
+function Subhero() {
   return (
-    <section className="mx-auto max-w-6xl px-6 pt-24 pb-20 sm:pt-32 sm:pb-28">
-      <h1 className="max-w-4xl text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-        The ground-truth layer
-        <br />
-        <span className="text-orange-400">for the agent economy.</span>
-      </h1>
-      <p className="mt-8 max-w-2xl text-lg leading-relaxed text-zinc-400 sm:text-xl">
+    <section className="mx-auto max-w-5xl border-t border-zinc-900 px-6 py-16">
+      <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+        The ground-truth layer for the agent economy.
+      </h2>
+      <p className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
         AI agents are everywhere — but they cannot see the real world. GroundTruth
         is the API and marketplace where agents pay humans worldwide to verify
         what is actually true, settled in seconds on the Bitcoin Lightning Network
         for fractions of a cent per check.
       </p>
-      <div className="mt-12 flex flex-col gap-3 sm:flex-row">
-        <Link
-          href="/agent"
-          className="rounded-lg bg-orange-500 px-6 py-3 text-center text-sm font-semibold text-zinc-950 transition hover:bg-orange-400"
-        >
-          Try the agent demo
-        </Link>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
           href="/worker"
           className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:border-zinc-500"
         >
           Earn sats as a worker
+        </Link>
+        <Link
+          href="/docs"
+          className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-6 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:border-zinc-500"
+        >
+          Read the SDK docs
         </Link>
       </div>
     </section>
