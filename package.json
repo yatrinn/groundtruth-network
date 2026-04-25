@@ -9,7 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@moneydevkit/nextjs": "^0.16.0",
+    "@supabase/supabase-js": "^2.104.1",
+    "@tavily/core": "^0.7.2",
     "next": "16.2.4",
+    "openai": "^6.34.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
