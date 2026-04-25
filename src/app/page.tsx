@@ -64,13 +64,14 @@ function Subhero() {
   return (
     <section className="mx-auto max-w-5xl border-t border-zinc-900 px-6 py-16">
       <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-        The ground-truth layer for the agent economy.
+        Real-time verification when the web is not enough.
       </h2>
       <p className="mt-6 max-w-2xl text-lg leading-relaxed text-zinc-400">
-        AI agents are everywhere — but they cannot see the real world. GroundTruth
-        is the API and marketplace where agents pay humans worldwide to verify
-        what is actually true, settled in seconds on the Bitcoin Lightning Network
-        for fractions of a cent per check.
+        AI agents do well with what is on the public web. They fail on what is
+        happening right now: open-hour changes, in-store availability,
+        location-specific conditions. GroundTruth is the API and marketplace
+        where an agent admits uncertainty and pays a human anywhere on Earth
+        to check — settled in seconds on the Bitcoin Lightning Network.
       </p>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link

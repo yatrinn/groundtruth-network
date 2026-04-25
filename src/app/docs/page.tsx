@@ -127,6 +127,49 @@ if (result.kind === "verified") {
         />
       </Section>
 
+      <Section title="What is real vs. simulated in this demo deployment">
+        <p className="mb-6 text-sm text-zinc-400">
+          GroundTruth is open about which parts of the system are wired to
+          production infrastructure and which are explicitly simulated in this
+          public demo. This matters for anyone evaluating the project — the
+          honest answer here is what makes the rest credible.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5">
+            <h3 className="text-sm font-semibold text-emerald-300">
+              Real on Bitcoin Mainnet today
+            </h3>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+              <li>BOLT11 invoices generated against live LUD-16 endpoints</li>
+              <li>Lightning Address resolution via @getalby/lightning-tools</li>
+              <li>Postgres state machine with race-safe conditional writes</li>
+              <li>Postgres-backed per-IP and global daily rate limits</li>
+              <li>Realtime push via Supabase Postgres triggers</li>
+              <li>OpenAI gpt-5.5 draft, judge, and plausibility-gate calls</li>
+              <li>Tavily web grounding for the honest agent</li>
+            </ul>
+          </div>
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
+            <h3 className="text-sm font-semibold text-amber-300">
+              Simulated for the public demo
+            </h3>
+            <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+              <li>Server-side Lightning sender (swap-in Lexe / Alby Hub / Spark)</li>
+              <li>Bounty escrow accepts the invoice optimistically as paid</li>
+              <li>Auto-verifier closes the loop when no human worker is online — every output is clearly labeled "Simulated demo answer"</li>
+              <li>Multi-verifier consensus (single-verifier + LLM judge today)</li>
+              <li>Worker reputation algorithm aggregates only completion count and earned sats — no on-chain proofs yet</li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-6 text-xs text-zinc-500">
+          The send-side Lightning sender is a one-file swap: replace the
+          <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">payToLightningAddress</code>
+          mock implementation in <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">src/lib/lightning.ts</code>
+          with a real node call. Everything else is wired for it.
+        </p>
+      </Section>
+
       <Section title="Architecture">
         <pre className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 text-xs leading-relaxed text-zinc-300">
 {`        AI AGENT                            HUMAN WORKER (anywhere)
