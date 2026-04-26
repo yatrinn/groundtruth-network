@@ -121,8 +121,11 @@ export default function WorkerPage() {
       setToast(data.error ?? "Submission failed");
       return;
     }
+    const real = data.payout?.real === true;
     setToast(
-      `Simulated payout of ${formatSats(active.bounty_sats)} to ${lnAddress}. Server-side Lightning sender is the post-hackathon swap.`
+      real
+        ? `Paid ${formatSats(active.bounty_sats)} on Bitcoin Lightning Mainnet to ${lnAddress}.`
+        : `Simulated payout of ${formatSats(active.bounty_sats)} to ${lnAddress}. Configure NWC_URL on the server to settle on Mainnet.`
     );
     setActive(null);
   }

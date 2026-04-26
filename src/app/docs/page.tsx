@@ -188,22 +188,31 @@ switch (result.kind) {
           </div>
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5">
             <h3 className="text-sm font-semibold text-amber-300">
-              Simulated for the public demo
+              Simulated unless configured
             </h3>
             <ul className="mt-3 space-y-2 text-sm text-zinc-300">
-              <li>Server-side Lightning sender (swap-in Lexe / Alby Hub / Spark)</li>
+              <li>
+                <strong className="text-zinc-100">Server-side payouts:</strong>{" "}
+                wired to <code className="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">@getalby/sdk</code> Nostr
+                Wallet Connect. Set <code className="rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-[11px] text-zinc-300">NWC_URL</code> in
+                the env to a connection string from any NWC-compatible wallet
+                (Phoenix, Alby Hub, Mutiny) and payouts settle on Bitcoin
+                Mainnet end-to-end. Without it, a simulated payout closes the loop.
+              </li>
               <li>Bounty escrow accepts the invoice optimistically as paid</li>
               <li>Auto-verifier closes the loop when no human worker is online — every output is clearly labeled "Simulated demo answer"</li>
               <li>Multi-verifier consensus (single-verifier + LLM judge today)</li>
-              <li>Worker reputation algorithm aggregates only completion count and earned sats — no on-chain proofs yet</li>
+              <li>Worker reputation aggregates completion count and earned sats — no on-chain proofs yet</li>
             </ul>
           </div>
         </div>
         <p className="mt-6 text-xs text-zinc-500">
-          The send-side Lightning sender is a one-file swap: replace the
-          <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">payToLightningAddress</code>
-          mock implementation in <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">src/lib/lightning.ts</code>
-          with a real node call. Everything else is wired for it.
+          The send-side is a single env var. Configure{" "}
+          <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">NWC_URL</code>
+          with a Nostr Wallet Connect string from any NWC-compatible wallet and
+          every payout settles on Bitcoin Mainnet via{" "}
+          <code className="mx-1 rounded bg-zinc-900 px-1.5 py-0.5 font-mono text-zinc-300">@getalby/sdk</code>.
+          Worker UI surfaces a different toast for real payouts vs simulated.
         </p>
       </Section>
 

@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@getalby/lightning-tools": "^8.1.0",
+    "@getalby/sdk": "^7.0.0",
     "@moneydevkit/nextjs": "^0.16.0",
     "@supabase/supabase-js": "^2.104.1",
     "@tavily/core": "^0.7.2",
@@ -17,7 +18,8 @@
     "openai": "^6.34.0",
     "qrcode.react": "^4.2.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "websocket-polyfill": "^1.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

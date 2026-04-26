@@ -136,7 +136,15 @@ export async function POST(
 
   return NextResponse.json({
     task: verified as Task,
-    payout,
+    payout: {
+      payment_hash: payout.payment_hash,
+      preimage: payout.preimage,
+      fee_sats: payout.fee_sats,
+      // True when sats actually moved on Bitcoin Mainnet via the NWC
+      // sender. False or undefined means the send-side fell back to
+      // a simulated payout (e.g., NWC not configured).
+      real: payout.real === true,
+    },
   });
 }
 
