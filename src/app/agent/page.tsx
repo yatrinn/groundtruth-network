@@ -502,7 +502,11 @@ function ConversationStage({ stage }: { stage: Stage }) {
       const isAuto = stage.task.worker_session_id === "demo-auto-verifier";
       return (
         <div className="space-y-3">
-          <ThinkingPipeline phases={["search", "draft", "judge", "post", "wait", "verify"]} current={5} />
+          <ThinkingPipeline
+            phases={["search", "draft", "judge", "post", "wait", "verify"]}
+            current={5}
+            autoVerified={isAuto}
+          />
           <Bubble
             role="agent"
             body={
@@ -624,9 +628,11 @@ function InvoiceCard({ invoice }: { invoice: LightningInvoice }) {
 function ThinkingPipeline({
   phases,
   current,
+  autoVerified,
 }: {
   phases: ThinkingPhase[];
   current: number;
+  autoVerified?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
@@ -634,6 +640,14 @@ function ThinkingPipeline({
         {phases.map((p, i) => {
           const meta = PHASE_META[p];
           const state = i < current ? "done" : i === current ? "active" : "pending";
+
+          // When the auto-verifier closed the loop, rename the final
+          // step so the UI never claims a human did it.
+          const isAutoVerifyStep = p === "verify" && autoVerified;
+          const label = isAutoVerifyStep
+            ? "Closed by demo simulation (no live worker)"
+            : meta.label;
+
           return (
             <li
               key={p}
@@ -650,13 +664,19 @@ function ThinkingPipeline({
                   state === "active"
                     ? "animate-pulse border border-orange-500/60 bg-orange-500/10 text-orange-300"
                     : state === "done"
-                      ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      ? isAutoVerifyStep
+                        ? "border border-amber-500/40 bg-amber-500/10 text-amber-300"
+                        : "border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                       : "border border-zinc-800"
                 }`}
               >
-                {state === "done" ? "✓" : meta.icon}
+                {state === "done"
+                  ? isAutoVerifyStep
+                    ? "🤖"
+                    : "✓"
+                  : meta.icon}
               </span>
-              <span>{meta.label}</span>
+              <span>{label}</span>
             </li>
           );
         })}
@@ -706,11 +726,12 @@ function TaskCard({ task, pending }: { task: Task; pending?: boolean }) {
         </div>
         <div className="text-right">{timeAgo(task.created_at)}</div>
       </div>
-      {task.payout_payment_hash && (
-        <p className="mt-3 truncate font-mono text-[10px] text-emerald-400">
-          payout: {task.payout_payment_hash.slice(0, 32)}…
-        </p>
-      )}
+      {task.payout_payment_hash &&
+        task.payout_payment_hash !== "0".repeat(64) && (
+          <p className="mt-3 truncate font-mono text-[10px] text-emerald-400">
+            payout: {task.payout_payment_hash.slice(0, 32)}…
+          </p>
+        )}
     </div>
   );
 }
